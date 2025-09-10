@@ -1,0 +1,2441 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI PREDICTOR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Применяем новый шрифт ко всему сайту */
+      body {
+        font-family: "Share Tech Mono", monospace;
+        text-shadow: 0 0 3px rgba(57, 255, 20, 0.4);
+        background-color: #000;
+        overflow-x: hidden; /* Предотвращаем горизонтальный скролл */
+      }
+      /* Анимация мигания курсора */
+      .cursor::after {
+        content: "_";
+        animation: blink 1s step-end infinite;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+      /* Стили для кастомного фокуса инпута */
+      .hacker-input:focus {
+        box-shadow: 0 0 15px rgba(57, 255, 20, 0.6);
+      }
+      /* Анимация для мигающего красного текста */
+      .blinking-red {
+        color: #ef4444;
+        animation: blink-red 1.5s step-end infinite;
+      }
+      @keyframes blink-red {
+        50% {
+          opacity: 0.5;
+        }
+      }
+      /* Анимация тряски для неверного кода */
+      .shake {
+        animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      }
+      @keyframes shake {
+        10%,
+        90% {
+          transform: translate3d(-1px, 0, 0);
+        }
+        20%,
+        80% {
+          transform: translate3d(2px, 0, 0);
+        }
+        30%,
+        50%,
+        70% {
+          transform: translate3d(-4px, 0, 0);
+        }
+        40%,
+        60% {
+          transform: translate3d(4px, 0, 0);
+        }
+      }
+      /* Стили для карточек */
+      .signal-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .signal-card:hover:not(.locked-card) {
+        transform: translateY(-5px);
+        box-shadow: 0 0 25px rgba(57, 255, 20, 0.5);
+      }
+      /* Стили для чата */
+      #chat-widget {
+        transition: all 0.3s ease-in-out;
+      }
+      #chat-messages::-webkit-scrollbar {
+        width: 4px;
+      }
+      #chat-messages::-webkit-scrollbar-track {
+        background: #1a1a1a;
+      }
+      #chat-messages::-webkit-scrollbar-thumb {
+        background: #00ff00;
+      }
+
+      /* Стили для горизонтальной ленты победителей */
+      #live-feed-container {
+        mask-image: linear-gradient(
+          to right,
+          transparent,
+          black 5%,
+          black 95%,
+          transparent
+        );
+        -webkit-mask-image: linear-gradient(
+          to right,
+          transparent,
+          black 5%,
+          black 95%,
+          transparent
+        );
+      }
+      .winner-item {
+        animation: slideInFromLeft 0.5s ease-out forwards;
+      }
+      @keyframes slideInFromLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      /* Стили для заблокированной кнопки */
+      .btn-disabled {
+        background-color: #4a5568;
+        cursor: not-allowed;
+        color: #a0aec0;
+      }
+      /* Анимация множителя */
+      .multiplier-rising {
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        color: #63b3ed; /* Синий цвет во время роста */
+      }
+      .multiplier-final {
+        color: #48bb78; /* Зеленый цвет после остановки */
+        text-shadow: 0 0 20px rgba(72, 187, 120, 0.8);
+      }
+      /* Стили для кастомных селектов */
+      .custom-select-options {
+        animation: fadeIn 0.2s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      /* Стили для сетки в Mines */
+      .mine-cell {
+        background-color: #1a202c;
+        border-radius: 0.375rem;
+        transition: all 0.3s ease-in-out;
+        cursor: default;
+      }
+      .mine-cell.safe {
+        background-image: url("https://www.freeiconspng.com/uploads/yellow-christmas-star-png-18.png");
+        background-size: 70%;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: #38a169;
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(56, 161, 105, 0.7);
+      }
+      /* Стили для консоли */
+      .game-console {
+        background-color: #0d1117;
+        border-color: #30363d;
+        height: 8rem; /* 128px */
+      }
+      .game-console p {
+        animation: fadeInConsole 0.3s ease-in;
+        color: #a5d6ff;
+      }
+      .game-console p.success {
+        color: #56d364;
+      }
+      .game-console p.error {
+        color: #f85149;
+      }
+      @keyframes fadeInConsole {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* Стили для Penalty */
+      .penalty-gate-post {
+        background-color: #a0aec0;
+      }
+      .penalty-target-zone {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease-in-out;
+      }
+      .penalty-target-zone.highlight {
+        background-color: rgba(56, 161, 105, 0.8);
+        border-color: #f6e05e;
+        box-shadow: 0 0 25px rgba(56, 161, 105, 0.9);
+      }
+      /* Стили для Apple/Chicken of Fortune */
+      .number-signal-display {
+        color: #48bb78;
+        text-shadow: 0 0 20px rgba(72, 187, 120, 0.8);
+      }
+
+      /* Стили для Chicken Road */
+      #chicken-road-viewport {
+        overflow: hidden;
+        background: linear-gradient(to bottom, #1a202c, #2d3748);
+      }
+      #chicken-road-track {
+        transition: transform 0.2s linear;
+      }
+      .chicken-stove {
+        background-color: #4a5568;
+        border: 2px solid #718096;
+        box-shadow: 0 4px 0 #2d3748;
+      }
+      #chicken-icon {
+        transition: transform 0.2s ease-out;
+        z-index: 10;
+      }
+
+      /* Стили для заблокированной карточки */
+      .locked-card {
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+      /* Стили для админ-панели */
+      .admin-input {
+        background-color: #1a202c;
+        border: 1px solid #4a5568;
+        color: #a0aec0;
+        transition: all 0.3s ease;
+      }
+      .admin-input:focus {
+        outline: none;
+        border-color: #38a169;
+        box-shadow: 0 0 10px rgba(56, 161, 105, 0.5);
+      }
+    </style>
+  </head>
+  <body class="bg-black text-green-400">
+    <div
+      id="main-content"
+      class="min-h-screen flex flex-col items-center justify-center p-4"
+    >
+      <header class="text-center mb-12">
+        <h1 class="text-3xl md:text-5xl tracking-widest cursor-default">
+          <span id="typing-text">AI PREDICTOR</span><span class="cursor"></span>
+        </h1>
+      </header>
+      <button
+        id="openModalBtn"
+        class="bg-transparent border-2 border-green-400 text-green-400 px-8 py-3 text-lg hover:bg-green-400 hover:text-black transition-all duration-300 active:scale-95 shadow-lg shadow-green-500/20 hover:shadow-green-500/40"
+      >
+        GET AI SIGNALS
+      </button>
+    </div>
+
+    <div
+      id="app-container"
+      class="hidden min-h-screen container mx-auto p-4 md:p-8"
+    >
+      <div class="w-full flex justify-end items-center gap-4 mb-4">
+        <button
+          id="admin-panel-btn"
+          class="hidden bg-yellow-600 text-white px-4 py-2 text-sm rounded-md hover:bg-yellow-500 transition-colors active:scale-95"
+        >
+          <i class="fas fa-user-shield mr-2"></i>Admin Panel
+        </button>
+        <button
+          id="logoutBtn"
+          class="bg-red-600 text-white px-4 py-2 text-sm rounded-md hover:bg-red-500 transition-colors active:scale-95"
+        >
+          <i class="fas fa-sign-out-alt mr-2"></i>Logout
+        </button>
+      </div>
+
+      <div id="live-feed-section" class="mb-8">
+        <h3 class="text-center text-xl mb-4 tracking-widest">
+          // TOP WINNERS NOW //
+        </h3>
+        <div
+          id="live-feed-container"
+          class="h-24 bg-black/30 border border-green-800 rounded-md p-2 flex items-center space-x-4 overflow-x-hidden"
+        ></div>
+      </div>
+
+      <div id="signals-section" class="">
+        <h2 class="text-3xl md:text-4xl text-center mb-10 tracking-widest">
+          // AVAILABLE AI SIGNALS //
+        </h2>
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6"
+        >
+          <div
+            class="signal-card bg-[#0d0d0d] border border-green-700 rounded-lg overflow-hidden flex flex-col"
+            data-game="aviator"
+          >
+            <img
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQqBdX8SuaC1Ws7ZYuCVQstQ4qRi9A_3SWujg&s"
+              alt="Aviator AI Predictor"
+              class="w-full h-48 object-cover"
+              onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/39ff14?text=Aviator';"
+            />
+            <div class="p-4 flex flex-col flex-grow text-center">
+              <h3 class="text-lg font-bold mb-2 flex-grow">
+                Aviator AI PREDICTOR
+              </h3>
+              <p
+                id="stats-aviator"
+                class="text-sm text-gray-400 mb-3 font-mono leading-tight"
+              >
+                // Loading data...
+              </p>
+              <button
+                class="activate-btn w-full mt-auto bg-green-600 text-black px-4 py-2 hover:bg-green-500 transition-all duration-300 active:scale-95"
+              >
+                ACTIVATE
+              </button>
+            </div>
+          </div>
+          <div
+            class="signal-card bg-[#0d0d0d] border border-green-700 rounded-lg overflow-hidden flex flex-col"
+            data-game="mines"
+          >
+            <img
+              src="https://dudaray.kz/3.png"
+              alt="Mines AI Predictor"
+              class="w-full h-48 object-cover"
+              onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/39ff14?text=Mines';"
+            />
+            <div class="p-4 flex flex-col flex-grow text-center">
+              <h3 class="text-lg font-bold mb-2 flex-grow">
+                Mines AI PREDICTOR
+              </h3>
+              <p
+                id="stats-mines"
+                class="text-sm text-gray-400 mb-3 font-mono leading-tight"
+              >
+                // Loading data...
+              </p>
+              <button
+                class="activate-btn w-full mt-auto bg-green-600 text-black px-4 py-2 hover:bg-green-500 transition-all duration-300 active:scale-95"
+              >
+                ACTIVATE
+              </button>
+            </div>
+          </div>
+          <div
+            class="signal-card bg-[#0d0d0d] border border-green-700 rounded-lg overflow-hidden flex flex-col"
+            data-game="penalty"
+          >
+            <img
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThYP5CGxc52hWd4ToMHI8MIJhun5BEjHh5LQ&s"
+              alt="Penalty AI Predictor"
+              class="w-full h-48 object-cover"
+              onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/39ff14?text=Penalty';"
+            />
+            <div class="p-4 flex flex-col flex-grow text-center">
+              <h3 class="text-lg font-bold mb-2 flex-grow">
+                Penalty AI PREDICTOR
+              </h3>
+              <p
+                id="stats-penalty"
+                class="text-sm text-gray-400 mb-3 font-mono leading-tight"
+              >
+                // Loading data...
+              </p>
+              <button
+                class="activate-btn w-full mt-auto bg-green-600 text-black px-4 py-2 hover:bg-green-500 transition-all duration-300 active:scale-95"
+              >
+                ACTIVATE
+              </button>
+            </div>
+          </div>
+          <div
+            class="signal-card bg-[#0d0d0d] border border-green-700 rounded-lg overflow-hidden flex flex-col"
+            data-game="apple"
+          >
+            <img
+              src="https://play-lh.googleusercontent.com/ezAY-TvV3PlhYWLs8k8czRjWWSdBwFtPrw72fNpS8p6wByC0xBG-Dgt0K5ojieZXrg"
+              alt="Apple of Fortune AI Predictor"
+              class="w-full h-48 object-cover"
+              onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/39ff14?text=Apple';"
+            />
+            <div class="p-4 flex flex-col flex-grow text-center">
+              <h3 class="text-lg font-bold mb-2 flex-grow">
+                Apple of Fortune AI PREDICTOR
+              </h3>
+              <p
+                id="stats-apple"
+                class="text-sm text-gray-400 mb-3 font-mono leading-tight"
+              >
+                // Loading data...
+              </p>
+              <button
+                class="activate-btn w-full mt-auto bg-green-600 text-black px-4 py-2 hover:bg-green-500 transition-all duration-300 active:scale-95"
+              >
+                ACTIVATE
+              </button>
+            </div>
+          </div>
+          <div
+            class="signal-card bg-[#0d0d0d] border border-green-700 rounded-lg overflow-hidden flex flex-col"
+            data-game="chicken"
+          >
+            <img
+              src="https://cdn6.aptoide.com/imgs/1/0/2/1023a04c18a7a91673200703af12a58f_icon.png"
+              alt="Chicken Road AI Predictor"
+              class="w-full h-48 object-cover"
+              onerror="this.onerror=null;this.src='https://placehold.co/600x400/000000/39ff14?text=Chicken';"
+            />
+            <div class="p-4 flex flex-col flex-grow text-center">
+              <h3 class="text-lg font-bold mb-2 flex-grow">
+                Chicken Road AI PREDICTOR
+              </h3>
+              <p
+                id="stats-chicken"
+                class="text-sm text-gray-400 mb-3 font-mono leading-tight"
+              >
+                // Loading data...
+              </p>
+              <button
+                class="activate-btn w-full mt-auto bg-green-600 text-black px-4 py-2 hover:bg-green-500 transition-all duration-300 active:scale-95"
+              >
+                ACTIVATE
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="signal-card locked-card bg-[#0d0d0d] border border-yellow-700 rounded-lg overflow-hidden flex flex-col"
+          >
+            <div
+              class="w-full h-48 bg-black flex items-center justify-center overflow-hidden relative"
+            >
+              <div
+                class="absolute w-[150%] bg-red-600 text-white text-center font-bold py-2 -rotate-12 text-sm shadow-lg"
+              >
+                NEED ANOTHER ACCESS CODE
+              </div>
+            </div>
+            <div class="p-4 flex flex-col flex-grow text-center">
+              <h3
+                class="text-lg font-bold mb-2 flex-grow text-yellow-300"
+                style="text-shadow: 0 0 8px #f6e05e"
+              >
+                VIP AI PREDICTOR
+              </h3>
+              <p
+                id="stats-vip1"
+                class="text-sm text-gray-400 mb-3 font-mono leading-tight"
+              >
+                // Loading data...
+              </p>
+              <button
+                class="w-full mt-auto bg-gray-600 text-gray-400 px-4 py-2 cursor-not-allowed"
+                disabled
+              >
+                ACTIVATE
+              </button>
+            </div>
+          </div>
+          <div
+            class="signal-card locked-card bg-[#0d0d0d] border border-yellow-700 rounded-lg overflow-hidden flex flex-col"
+          >
+            <div
+              class="w-full h-48 bg-black flex items-center justify-center overflow-hidden relative"
+            >
+              <div
+                class="absolute w-[150%] bg-red-600 text-white text-center font-bold py-2 -rotate-12 text-sm shadow-lg"
+              >
+                NEED ANOTHER ACCESS CODE
+              </div>
+            </div>
+            <div class="p-4 flex flex-col flex-grow text-center">
+              <h3
+                class="text-lg font-bold mb-2 flex-grow text-yellow-300"
+                style="text-shadow: 0 0 8px #f6e05e"
+              >
+                VIP AI PREDICTOR
+              </h3>
+              <p
+                id="stats-vip2"
+                class="text-sm text-gray-400 mb-3 font-mono leading-tight"
+              >
+                // Loading data...
+              </p>
+              <button
+                class="w-full mt-auto bg-gray-600 text-gray-400 px-4 py-2 cursor-not-allowed"
+                disabled
+              >
+                ACTIVATE
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="game-view" class="hidden">
+        <div
+          id="game-screen-aviator"
+          class="game-screen hidden relative min-h-[60vh] flex flex-col items-center justify-center bg-black/30 border border-green-800 rounded-md p-4 pt-16 pb-8"
+        >
+          <button
+            class="back-to-signals-btn absolute top-4 left-4 text-yellow-400 hover:text-yellow-300 transition-colors bg-transparent border border-yellow-400 rounded px-3 py-1 text-sm hover:bg-yellow-400 hover:text-black"
+          >
+            <-- Back
+          </button>
+          <h3
+            class="game-title text-3xl sm:text-4xl text-center mb-4 px-12 sm:px-0"
+          >
+            AVIATOR AI PREDICTOR
+          </h3>
+          <div class="mb-2 py-4">
+            <p
+              id="aviator-multiplier"
+              class="text-7xl md:text-9xl font-mono text-center text-white transition-colors duration-500"
+            >
+              x1.00
+            </p>
+          </div>
+          <p
+            id="aviator-bet-suggestion"
+            class="bet-suggestion-text text-center text-yellow-400 h-8 my-6 text-sm sm:text-xl font-bold px-2"
+          ></p>
+          <div
+            id="aviator-actions-initial"
+            class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full max-w-md"
+          >
+            <button
+              id="aviator-get-bet-btn"
+              class="flex-1 bg-green-600 text-black px-6 py-3 text-lg hover:bg-green-500 transition-all duration-300 active:scale-95 rounded-md"
+            >
+              Get Bet Size
+            </button>
+            <button
+              id="aviator-get-signal-btn"
+              class="flex-1 px-6 py-3 text-lg transition-all duration-300 active:scale-95 rounded-md btn-disabled"
+              disabled
+            >
+              Get Signal
+            </button>
+          </div>
+          <button
+            id="aviator-get-another-btn"
+            class="hidden w-full max-w-md bg-yellow-500 text-black px-6 py-3 text-lg hover:bg-yellow-400 transition-all duration-300 active:scale-95 rounded-md"
+          >
+            GET ANOTHER SIGNAL
+          </button>
+          <div
+            id="aviator-console"
+            class="game-console w-full max-w-md border rounded-md mt-6 p-2 font-mono text-xs overflow-y-auto"
+          >
+            <div></div>
+          </div>
+        </div>
+
+        <div
+          id="game-screen-mines"
+          class="game-screen hidden relative min-h-[60vh] flex flex-col items-center justify-center bg-black/30 border border-green-800 rounded-md p-4 pt-16 pb-8"
+        >
+          <button
+            class="back-to-signals-btn absolute top-4 left-4 text-yellow-400 hover:text-yellow-300 transition-colors bg-transparent border border-yellow-400 rounded px-3 py-1 text-sm hover:bg-yellow-400 hover:text-black"
+          >
+            <-- Back
+          </button>
+          <h3
+            class="game-title text-3xl sm:text-4xl text-center mb-6 px-12 sm:px-0"
+          >
+            MINES AI PREDICTOR
+          </h3>
+          <div class="flex flex-col sm:flex-row gap-6 mb-6 w-full max-w-lg">
+            <div class="relative flex-1" data-select-id="grid-size">
+              <label class="block text-sm text-gray-400 mb-1">Grid Size</label>
+              <button
+                class="custom-select-trigger w-full bg-gray-900 border border-green-700 rounded p-3 flex justify-between items-center"
+              >
+                <span class="selected-option">5x5</span
+                ><i class="fas fa-chevron-down text-xs"></i>
+              </button>
+              <div
+                class="custom-select-options hidden absolute top-full left-0 right-0 mt-1 bg-gray-900 border border-green-700 rounded-md z-10 overflow-hidden"
+              >
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">3x3</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">4x4</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">5x5</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">6x6</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">7x7</div>
+              </div>
+            </div>
+            <div class="relative flex-1" data-select-id="mine-count">
+              <label class="block text-sm text-gray-400 mb-1">Mine Count</label>
+              <button
+                class="custom-select-trigger w-full bg-gray-900 border border-green-700 rounded p-3 flex justify-between items-center"
+              >
+                <span class="selected-option">3</span
+                ><i class="fas fa-chevron-down text-xs"></i>
+              </button>
+              <div
+                class="custom-select-options hidden absolute top-full left-0 right-0 mt-1 bg-gray-900 border border-green-700 rounded-md z-10 overflow-y-auto max-h-48"
+              >
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">1</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">2</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">3</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">4</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">5</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">6</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">7</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">10</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">15</div>
+              </div>
+            </div>
+          </div>
+          <div
+            id="mines-grid-container"
+            class="w-full max-w-md aspect-square mb-6"
+          ></div>
+          <p
+            id="mines-bet-suggestion"
+            class="bet-suggestion-text text-center text-yellow-400 h-8 my-6 text-sm sm:text-xl font-bold p-2"
+          ></p>
+          <div
+            id="mines-actions-initial"
+            class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full max-w-md"
+          >
+            <button
+              id="mines-get-bet-btn"
+              class="flex-1 bg-green-600 text-black px-6 py-3 text-lg hover:bg-green-500 transition-all duration-300 active:scale-95 rounded-md"
+            >
+              Get Bet Size
+            </button>
+            <button
+              id="mines-get-signal-btn"
+              class="flex-1 px-6 py-3 text-lg transition-all duration-300 active:scale-95 rounded-md btn-disabled"
+              disabled
+            >
+              Get Signal
+            </button>
+          </div>
+          <button
+            id="mines-get-another-btn"
+            class="hidden w-full max-w-md bg-yellow-500 text-black px-6 py-3 text-lg hover:bg-yellow-400 transition-all duration-300 active:scale-95 rounded-md"
+          >
+            GET ANOTHER SIGNAL
+          </button>
+          <div
+            id="mines-console"
+            class="game-console w-full max-w-md border rounded-md mt-6 p-2 font-mono text-xs overflow-y-auto"
+          >
+            <div></div>
+          </div>
+        </div>
+
+        <div
+          id="game-screen-penalty"
+          class="game-screen hidden relative min-h-[60vh] flex flex-col items-center justify-center bg-black/30 border border-green-800 rounded-md p-4 pt-16 pb-8"
+        >
+          <button
+            class="back-to-signals-btn absolute top-4 left-4 text-yellow-400 hover:text-yellow-300 transition-colors bg-transparent border border-yellow-400 rounded px-3 py-1 text-sm hover:bg-yellow-400 hover:text-black"
+          >
+            <-- Back
+          </button>
+          <h3
+            class="game-title text-3xl sm:text-4xl text-center mb-6 px-12 sm:px-0"
+          >
+            PENALTY AI PREDICTOR
+          </h3>
+
+          <div
+            class="relative w-full max-w-lg h-64 md:h-80 bg-gray-900/20 border-2 border-gray-600 mb-6"
+          >
+            <div
+              class="penalty-gate-post absolute left-0 top-0 w-2 h-full"
+            ></div>
+            <div
+              class="penalty-gate-post absolute right-0 top-0 w-2 h-full"
+            ></div>
+            <div
+              class="penalty-gate-post absolute left-0 top-0 w-full h-2"
+            ></div>
+            <div
+              data-zone="1"
+              class="penalty-target-zone absolute top-4 left-4 w-16 h-16 md:w-20 md:h-20 rounded-full"
+            ></div>
+            <div
+              data-zone="2"
+              class="penalty-target-zone absolute top-4 right-4 w-16 h-16 md:w-20 md:h-20 rounded-full"
+            ></div>
+            <div
+              data-zone="3"
+              class="penalty-target-zone absolute top-4 left-1/2 -translate-x-1/2 w-16 h-16 md:w-20 md:h-20 rounded-full"
+            ></div>
+            <div
+              data-zone="4"
+              class="penalty-target-zone absolute bottom-4 left-4 w-16 h-16 md:w-20 md:h-20 rounded-full"
+            ></div>
+            <div
+              data-zone="5"
+              class="penalty-target-zone absolute bottom-4 right-4 w-16 h-16 md:w-20 md:h-20 rounded-full"
+            ></div>
+          </div>
+
+          <p
+            id="penalty-bet-suggestion"
+            class="bet-suggestion-text text-center text-yellow-400 h-8 my-6 text-sm sm:text-xl font-bold px-2"
+          ></p>
+          <div
+            id="penalty-actions-initial"
+            class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full max-w-md"
+          >
+            <button
+              id="penalty-get-bet-btn"
+              class="flex-1 bg-green-600 text-black px-6 py-3 text-lg hover:bg-green-500 transition-all duration-300 active:scale-95 rounded-md"
+            >
+              Get Bet Size
+            </button>
+            <button
+              id="penalty-get-signal-btn"
+              class="flex-1 px-6 py-3 text-lg transition-all duration-300 active:scale-95 rounded-md btn-disabled"
+              disabled
+            >
+              Get Signal
+            </button>
+          </div>
+          <button
+            id="penalty-start-new-game-btn"
+            class="hidden w-full max-w-md bg-yellow-500 text-black px-6 py-3 text-lg hover:bg-yellow-400 transition-all duration-300 active:scale-95 rounded-md mt-4"
+          >
+            Start New Game
+          </button>
+          <div
+            id="penalty-console"
+            class="game-console w-full max-w-md border rounded-md mt-6 p-2 font-mono text-xs overflow-y-auto"
+          >
+            <div></div>
+          </div>
+        </div>
+
+        <div
+          id="game-screen-apple"
+          class="game-screen hidden relative min-h-[60vh] flex flex-col items-center justify-center bg-black/30 border border-green-800 rounded-md p-4 pt-16 pb-8"
+        >
+          <button
+            class="back-to-signals-btn absolute top-4 left-4 text-yellow-400 hover:text-yellow-300 transition-colors bg-transparent border border-yellow-400 rounded px-3 py-1 text-sm hover:bg-yellow-400 hover:text-black"
+          >
+            <-- Back
+          </button>
+          <h3
+            class="game-title text-3xl sm:text-4xl text-center mb-4 px-12 sm:px-0"
+          >
+            Apple of Fortune AI PREDICTOR
+          </h3>
+          <div class="flex-grow flex items-center justify-center">
+            <p
+              id="apple-signal-display"
+              class="text-9xl font-mono text-center text-white"
+            >
+              #
+            </p>
+          </div>
+          <p
+            id="apple-bet-suggestion"
+            class="bet-suggestion-text text-center text-yellow-400 h-8 my-6 text-sm sm:text-xl font-bold px-2"
+          ></p>
+          <div
+            id="apple-actions-initial"
+            class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full max-w-md"
+          >
+            <button
+              id="apple-get-bet-btn"
+              class="flex-1 bg-green-600 text-black px-6 py-3 text-lg hover:bg-green-500 transition-all duration-300 active:scale-95 rounded-md"
+            >
+              Get Bet Size
+            </button>
+            <button
+              id="apple-get-signal-btn"
+              class="flex-1 px-6 py-3 text-lg transition-all duration-300 active:scale-95 rounded-md btn-disabled"
+              disabled
+            >
+              Get Signal
+            </button>
+          </div>
+          <button
+            id="apple-start-new-game-btn"
+            class="hidden w-full max-w-md bg-yellow-500 text-black px-6 py-3 text-lg hover:bg-yellow-400 transition-all duration-300 active:scale-95 rounded-md mt-4"
+          >
+            Start New Game
+          </button>
+          <div
+            id="apple-console"
+            class="game-console w-full max-w-md border rounded-md mt-6 p-2 font-mono text-xs overflow-y-auto"
+          >
+            <div></div>
+          </div>
+        </div>
+
+        <div
+          id="game-screen-chicken"
+          class="game-screen hidden relative min-h-[60vh] flex flex-col items-center justify-center bg-black/30 border border-green-800 rounded-md p-4 pt-16 pb-8"
+        >
+          <button
+            class="back-to-signals-btn absolute top-4 left-4 text-yellow-400 hover:text-yellow-300 transition-colors bg-transparent border border-yellow-400 rounded px-3 py-1 text-sm hover:bg-yellow-400 hover:text-black"
+          >
+            <-- Back
+          </button>
+          <h3
+            class="game-title text-3xl sm:text-4xl text-center mb-4 px-12 sm:px-0"
+          >
+            Chicken Road AI PREDICTOR
+          </h3>
+
+          <div class="w-full flex justify-center mb-4">
+            <div
+              class="relative w-full max-w-xs"
+              data-select-id="chicken-difficulty"
+            >
+              <label class="block text-sm text-gray-400 mb-1 text-center"
+                >Difficulty</label
+              >
+              <button
+                class="custom-select-trigger w-full bg-gray-900 border border-green-700 rounded p-3 flex justify-between items-center"
+              >
+                <span class="selected-option">Easy</span
+                ><i class="fas fa-chevron-down text-xs"></i>
+              </button>
+              <div
+                class="custom-select-options hidden absolute top-full left-0 right-0 mt-1 bg-gray-900 border border-green-700 rounded-md z-10 overflow-hidden"
+              >
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">Easy</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">
+                  Medium
+                </div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">Hard</div>
+                <div class="p-2 cursor-pointer hover:bg-green-800/50">
+                  Hardcore
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            id="chicken-road-viewport"
+            class="w-full h-24 relative rounded-md border-y-4 border-gray-500"
+          >
+            <div
+              id="chicken-road-track"
+              class="h-full relative flex items-center"
+            ></div>
+            <img
+              id="chicken-icon"
+              src="https://iili.io/FvIoXhg.webp"
+              class="absolute h-16 w-16 top-1/2"
+              alt="Chicken"
+            />
+          </div>
+
+          <p
+            id="chicken-bet-suggestion"
+            class="bet-suggestion-text text-center text-yellow-400 h-8 my-6 text-sm sm:text-xl font-bold px-2"
+          ></p>
+          <div
+            id="chicken-actions-initial"
+            class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full max-w-md"
+          >
+            <button
+              id="chicken-get-bet-btn"
+              class="flex-1 bg-green-600 text-black px-6 py-3 text-lg hover:bg-green-500 transition-all duration-300 active:scale-95 rounded-md"
+            >
+              Get Bet Size
+            </button>
+            <button
+              id="chicken-get-signal-btn"
+              class="flex-1 px-6 py-3 text-lg transition-all duration-300 active:scale-95 rounded-md btn-disabled"
+              disabled
+            >
+              Get Signal
+            </button>
+          </div>
+          <button
+            id="chicken-get-another-btn"
+            class="hidden w-full max-w-md bg-yellow-500 text-black px-6 py-3 text-lg hover:bg-yellow-400 transition-all duration-300 active:scale-95 rounded-md"
+          >
+            GET ANOTHER SIGNAL
+          </button>
+          <div
+            id="chicken-console"
+            class="game-console w-full max-w-md border rounded-md mt-6 p-2 font-mono text-xs overflow-y-auto"
+          >
+            <div></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="admin-panel" class="hidden mt-12 mb-8">
+        <div
+          class="bg-black/30 border-2 border-yellow-600 rounded-lg p-6 max-w-4xl mx-auto"
+        >
+          <h2
+            class="text-3xl text-yellow-300 text-center mb-6 tracking-widest"
+            style="text-shadow: 0 0 8px #f6e05e"
+          >
+            // ADMIN SIGNAL CONTROL //
+          </h2>
+          <div
+            id="admin-status-message"
+            class="text-center h-6 mb-4 font-mono"
+          ></div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label for="admin-aviator" class="font-bold text-lg"
+                >Aviator Signal</label
+              >
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  id="admin-aviator"
+                  class="admin-input flex-grow rounded px-3 py-2"
+                  placeholder="e.g., 5.55"
+                />
+                <button
+                  data-game="aviator"
+                  class="admin-set-btn bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-400 active:scale-95"
+                >
+                  Установить
+                </button>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label for="admin-mines" class="font-bold text-lg"
+                >Mines Signal</label
+              >
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  id="admin-mines"
+                  class="admin-input flex-grow rounded px-3 py-2"
+                  placeholder="5 ячеек, e.g., 0, 5, 12, 18, 24"
+                />
+                <button
+                  data-game="mines"
+                  class="admin-set-btn bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-400 active:scale-95"
+                >
+                  Установить
+                </button>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label for="admin-penalty" class="font-bold text-lg"
+                >Penalty Signal</label
+              >
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  id="admin-penalty"
+                  class="admin-input flex-grow rounded px-3 py-2"
+                  placeholder="5 зон, e.g., 1, 5, 3, 2, 4"
+                />
+                <button
+                  data-game="penalty"
+                  class="admin-set-btn bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-400 active:scale-95"
+                >
+                  Установить
+                </button>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label for="admin-apple" class="font-bold text-lg"
+                >Apple of Fortune Signal</label
+              >
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  id="admin-apple"
+                  class="admin-input flex-grow rounded px-3 py-2"
+                  placeholder="10 рядов, e.g., 1,2,3,4,5,1,2,3,4,5"
+                />
+                <button
+                  data-game="apple"
+                  class="admin-set-btn bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-400 active:scale-95"
+                >
+                  Установить
+                </button>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label for="admin-chicken" class="font-bold text-lg"
+                >Chicken Road Signal</label
+              >
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  id="admin-chicken"
+                  class="admin-input flex-grow rounded px-3 py-2"
+                  placeholder="e.g., 7"
+                />
+                <button
+                  data-game="chicken"
+                  class="admin-set-btn bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-400 active:scale-95"
+                >
+                  Установить
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-8 flex justify-center">
+            <button
+              id="admin-clear-all"
+              class="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-500 active:scale-95"
+            >
+              Сбросить все сигналы
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="accessModal"
+      class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center p-4 hidden"
+    >
+      <div
+        id="modalContainer"
+        class="bg-[#0d0d0d] border border-green-500 rounded-lg p-6 md:p-8 w-full max-w-sm relative shadow-2xl shadow-green-500/30"
+      >
+        <button
+          id="closeModalBtn"
+          class="absolute top-2 right-3 text-gray-500 hover:text-green-400 text-3xl transition-colors"
+        >
+          ×
+        </button>
+        <div id="formContent" class="text-center">
+          <p class="blinking-red text-sm mb-4">
+            // 3 access codes available for today
+          </p>
+          <label for="accessCode" class="block text-xl mb-4"
+            >Type access code</label
+          ><input
+            type="text"
+            id="accessCode"
+            name="accessCode"
+            class="hacker-input w-full bg-gray-900 border border-green-600 text-green-300 rounded p-3 text-center focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+            placeholder="Access code"
+          />
+          <p id="errorMessage" class="text-red-500 h-5 mt-2 text-sm"></p>
+          <button
+            id="validateBtn"
+            class="mt-4 w-full bg-green-600 text-black px-6 py-2 text-lg hover:bg-green-500 transition-all duration-300 active:scale-95"
+          >
+            VALIDATE
+          </button>
+        </div>
+        <div
+          id="statusContent"
+          class="text-center hidden h-36 flex items-center justify-center"
+        >
+          <p id="statusText" class="text-2xl animate-pulse"></p>
+        </div>
+      </div>
+    </div>
+
+    <div id="chat-overlay" class="fixed inset-0 bg-black/60 z-40 hidden"></div>
+
+    <div class="fixed bottom-5 right-5 z-50">
+      <button
+        id="chat-toggle-btn"
+        class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-black shadow-lg shadow-green-500/50 hover:scale-110 transition-transform"
+      >
+        <i class="fas fa-comments text-3xl"></i>
+      </button>
+      <div
+        id="chat-widget"
+        class="hidden absolute bottom-20 right-0 w-80 sm:w-96 h-[500px] bg-black/80 backdrop-blur-md border-2 border-green-600 rounded-lg flex flex-col"
+      >
+        <div
+          class="p-3 flex justify-between items-center border-b border-green-800"
+        >
+          <h3 class="text-lg">// LIVE CHAT //</h3>
+          <button
+            id="chat-close-btn"
+            class="text-gray-400 hover:text-green-400"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div
+          id="chat-messages"
+          class="flex-1 p-3 overflow-y-auto space-y-3"
+        ></div>
+        <div class="p-3 border-t border-green-800">
+          <div class="flex space-x-2">
+            <input
+              type="text"
+              id="chat-input"
+              class="flex-1 bg-gray-900 border border-green-700 rounded px-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+              placeholder="Your message..."
+            /><button
+              id="chat-send-btn"
+              class="bg-green-600 text-black px-4 py-1 rounded hover:bg-green-500 active:scale-95 disabled:bg-gray-600 disabled:cursor-not-allowed"
+            >
+              SEND
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // --- DOM Element Selection ---
+      const mainContent = document.getElementById("main-content");
+      const appContainer = document.getElementById("app-container");
+      const signalsSection = document.getElementById("signals-section");
+      const liveFeedSection = document.getElementById("live-feed-section");
+      const gameView = document.getElementById("game-view");
+      const activateBtns = document.querySelectorAll(".activate-btn");
+      const openModalBtn = document.getElementById("openModalBtn");
+      const accessModal = document.getElementById("accessModal");
+      const modalContainer = document.getElementById("modalContainer");
+      const closeModalBtn = document.getElementById("closeModalBtn");
+      const accessCodeInput = document.getElementById("accessCode");
+      const validateBtn = document.getElementById("validateBtn");
+      const formContent = document.getElementById("formContent");
+      const statusContent = document.getElementById("statusContent");
+      const statusText = document.getElementById("statusText");
+      const errorMessage = document.getElementById("errorMessage");
+      const chatToggleBtn = document.getElementById("chat-toggle-btn");
+      const chatCloseBtn = document.getElementById("chat-close-btn");
+      const chatWidget = document.getElementById("chat-widget");
+      const chatOverlay = document.getElementById("chat-overlay");
+      const chatMessages = document.getElementById("chat-messages");
+      const chatInput = document.getElementById("chat-input");
+      const chatSendBtn = document.getElementById("chat-send-btn");
+      const logoutBtn = document.getElementById("logoutBtn");
+      let chatInterval;
+
+      // --- ADMIN PANEL ELEMENTS ---
+      const adminPanelBtn = document.getElementById("admin-panel-btn");
+      const adminPanel = document.getElementById("admin-panel");
+      const adminStatusMessage = document.getElementById(
+        "admin-status-message"
+      );
+      const adminSetBtns = document.querySelectorAll(".admin-set-btn");
+      const adminClearAllBtn = document.getElementById("admin-clear-all");
+      let isAdmin = false;
+
+      // --- FIXED SIGNALS STORAGE ---
+      let fixedAviatorSignal = null;
+      let fixedMinesSignal = null;
+      let fixedPenaltySignal = null;
+      let penaltySignalIndex = 0;
+      let fixedAppleSignal = null;
+      let appleSignalIndex = 0;
+      let fixedChickenSignal = null;
+
+      // --- AVIATOR GAME ELEMENTS ---
+      const gameScreenAviator = document.getElementById("game-screen-aviator");
+      const aviatorMultiplier = document.getElementById("aviator-multiplier");
+      const aviatorBetSuggestion = document.getElementById(
+        "aviator-bet-suggestion"
+      );
+      const aviatorGetBetBtn = document.getElementById("aviator-get-bet-btn");
+      const aviatorGetSignalBtn = document.getElementById(
+        "aviator-get-signal-btn"
+      );
+      const aviatorActionsInitial = document.getElementById(
+        "aviator-actions-initial"
+      );
+      const aviatorGetAnotherBtn = document.getElementById(
+        "aviator-get-another-btn"
+      );
+      const aviatorConsoleOutput = document.getElementById("aviator-console");
+      let aviatorSignalCount =
+        parseInt(localStorage.getItem("aviatorSignalCount")) || 0;
+      let multiplierAnimation;
+
+      // --- MINES GAME ELEMENTS ---
+      const gameScreenMines = document.getElementById("game-screen-mines");
+      const minesGridContainer = document.getElementById(
+        "mines-grid-container"
+      );
+      const minesBetSuggestion = document.getElementById(
+        "mines-bet-suggestion"
+      );
+      const minesGetBetBtn = document.getElementById("mines-get-bet-btn");
+      const minesGetSignalBtn = document.getElementById("mines-get-signal-btn");
+      const minesActionsInitial = document.getElementById(
+        "mines-actions-initial"
+      );
+      const minesGetAnotherBtn = document.getElementById(
+        "mines-get-another-btn"
+      );
+      const minesConsoleOutput = document.getElementById("mines-console");
+      let minesState = { gridSize: 5, mineCount: 3 };
+
+      // --- PENALTY GAME ELEMENTS ---
+      const gameScreenPenalty = document.getElementById("game-screen-penalty");
+      const penaltyTargetZones = gameScreenPenalty.querySelectorAll(
+        ".penalty-target-zone"
+      );
+      const penaltyBetSuggestion = document.getElementById(
+        "penalty-bet-suggestion"
+      );
+      const penaltyGetBetBtn = document.getElementById("penalty-get-bet-btn");
+      const penaltyGetSignalBtn = document.getElementById(
+        "penalty-get-signal-btn"
+      );
+      const penaltyActionsInitial = document.getElementById(
+        "penalty-actions-initial"
+      );
+      const penaltyStartNewGameBtn = document.getElementById(
+        "penalty-start-new-game-btn"
+      );
+      const penaltyConsoleOutput = document.getElementById("penalty-console");
+      let penaltySignalCountInRound = 0;
+
+      // --- APPLE OF FORTUNE GAME ELEMENTS ---
+      const gameScreenApple = document.getElementById("game-screen-apple");
+      const appleSignalDisplay = document.getElementById(
+        "apple-signal-display"
+      );
+      const appleBetSuggestion = document.getElementById(
+        "apple-bet-suggestion"
+      );
+      const appleGetBetBtn = document.getElementById("apple-get-bet-btn");
+      const appleGetSignalBtn = document.getElementById("apple-get-signal-btn");
+      const appleActionsInitial = document.getElementById(
+        "apple-actions-initial"
+      );
+      const appleStartNewGameBtn = document.getElementById(
+        "apple-start-new-game-btn"
+      );
+      const appleConsoleOutput = document.getElementById("apple-console");
+      let appleSignalCountInRound = 0;
+
+      // --- CHICKEN ROAD GAME ELEMENTS ---
+      const gameScreenChicken = document.getElementById("game-screen-chicken");
+      const chickenIcon = document.getElementById("chicken-icon");
+      const chickenRoadTrack = document.getElementById("chicken-road-track");
+      const chickenBetSuggestion = document.getElementById(
+        "chicken-bet-suggestion"
+      );
+      const chickenGetBetBtn = document.getElementById("chicken-get-bet-btn");
+      const chickenGetSignalBtn = document.getElementById(
+        "chicken-get-signal-btn"
+      );
+      const chickenActionsInitial = document.getElementById(
+        "chicken-actions-initial"
+      );
+      const chickenGetAnotherBtn = document.getElementById(
+        "chicken-get-another-btn"
+      );
+      const chickenConsoleOutput = document.getElementById("chicken-console");
+      let chickenState = { difficulty: "Easy", currentStep: 0 };
+      const STOVE_WIDTH = 128; // width of stove + gap
+
+      // --- Console Messages ---
+      const betConsoleMessages = [
+        "Connecting to data stream...",
+        "Analyzing market volatility...",
+        "Calculating risk-to-reward ratio...",
+        "Running predictive model v3.4...",
+        "Finalizing bet size...",
+        "SUCCESS: Bet parameters calculated.",
+      ];
+      const aviatorSignalConsoleMessages = [
+        "Initiating flight path analysis...",
+        "Processing real-time exit vectors...",
+        "Calibrating for atmospheric variance...",
+        "Cross-referencing historical data...",
+        "LOCKING SIGNAL...",
+        "SUCCESS: Multiplier signal acquired.",
+      ];
+      const minesSignalConsoleMessages = [
+        "Booting grid scanner...",
+        "Mapping probability matrix...",
+        "Executing quantum entanglement check...",
+        "Identifying low-risk cell clusters...",
+        "ISOLATING SAFE PATH...",
+        "SUCCESS: 5 safe cells identified.",
+      ];
+      const penaltySignalConsoleMessages = [
+        "Accessing goalkeeper's neural patterns...",
+        "Calculating shot trajectory probabilities...",
+        "Analyzing wind and field conditions...",
+        "Identifying weakest defensive point...",
+        "TARGET ACQUIRED...",
+        "SUCCESS: Optimal shot zone predicted.",
+      ];
+      const appleSignalConsoleMessages = [
+        "Initializing fortune algorithm...",
+        "Scanning probability tree...",
+        "Syncing with quantum randomizer...",
+        "Parsing ancient luck patterns...",
+        "HARVESTING RESULT...",
+        "SUCCESS: Fortunate outcome determined.",
+      ];
+      const chickenSignalConsoleMessages = [
+        "Analyzing chicken behavior patterns...",
+        "Calculating optimal path...",
+        "Avoiding farm obstacles...",
+        "Predicting fox movements...",
+        "CROSSING THE ROAD...",
+        "SUCCESS: Safe path determined.",
+      ];
+
+      // --- Session Logic ---
+      function checkAccessSession() {
+        const grantedTimestamp = localStorage.getItem("accessGrantedTimestamp");
+        if (!grantedTimestamp) return;
+        const fourHours = 4 * 60 * 60 * 1000;
+        const now = new Date().getTime();
+        if (now - parseInt(grantedTimestamp) < fourHours) {
+          mainContent.classList.add("hidden");
+          appContainer.classList.remove("hidden");
+          if (localStorage.getItem("isAdmin") === "true") {
+            isAdmin = true;
+            adminPanelBtn.classList.remove("hidden");
+          }
+        } else {
+          localStorage.removeItem("accessGrantedTimestamp");
+          localStorage.removeItem("isAdmin");
+        }
+      }
+
+      // --- Modal Logic ---
+      const handleValidation = () => {
+        const code = accessCodeInput.value;
+        let accessGranted = false;
+
+        if (code === "2282") {
+          accessGranted = true;
+          localStorage.setItem("isAdmin", "false");
+          isAdmin = false;
+        } else if (code === "admin2282") {
+          accessGranted = true;
+          localStorage.setItem("isAdmin", "true");
+          isAdmin = true;
+        }
+
+        if (accessGranted) {
+          const now = new Date().getTime();
+          localStorage.setItem("accessGrantedTimestamp", now);
+          formContent.classList.add("hidden");
+          statusContent.classList.remove("hidden");
+          statusText.textContent = "Decrypting signals...";
+          setTimeout(() => {
+            statusText.textContent = "ACCESS GRANTED";
+            statusText.classList.remove("animate-pulse");
+            setTimeout(() => {
+              closeModal();
+              mainContent.classList.add("hidden");
+              appContainer.classList.remove("hidden");
+              if (isAdmin) {
+                adminPanelBtn.classList.remove("hidden");
+              }
+            }, 1000);
+          }, 1500);
+        } else {
+          errorMessage.textContent = "ACCESS DENIED. CODE INVALID.";
+          accessCodeInput.value = "";
+          modalContainer.classList.add("shake");
+          setTimeout(() => modalContainer.classList.remove("shake"), 500);
+        }
+      };
+      const openModal = () => {
+        accessModal.classList.remove("hidden");
+        setTimeout(() => accessCodeInput.focus(), 50);
+      };
+      const closeModal = () => {
+        accessModal.classList.add("hidden");
+        setTimeout(() => {
+          formContent.classList.remove("hidden");
+          statusContent.classList.add("hidden");
+          statusText.classList.add("animate-pulse");
+          errorMessage.textContent = "";
+          accessCodeInput.value = "";
+        }, 300);
+      };
+
+      // --- SPA (Single-Page App) View Logic ---
+      function showGameView(gameName) {
+        signalsSection.classList.add("hidden");
+        adminPanel.classList.add("hidden");
+        gameView.classList.remove("hidden");
+        document
+          .querySelectorAll(".game-screen")
+          .forEach((screen) => screen.classList.add("hidden"));
+
+        if (gameName === "aviator") {
+          gameScreenAviator.classList.remove("hidden");
+          resetAviatorGame();
+        } else if (gameName === "mines") {
+          gameScreenMines.classList.remove("hidden");
+          resetMinesGame();
+        } else if (gameName === "penalty") {
+          gameScreenPenalty.classList.remove("hidden");
+          resetPenaltyGame();
+        } else if (gameName === "apple") {
+          gameScreenApple.classList.remove("hidden");
+          resetAppleGame();
+        } else if (gameName === "chicken") {
+          gameScreenChicken.classList.remove("hidden");
+          resetChickenGame();
+        }
+      }
+
+      function showSignalsView() {
+        gameView.classList.add("hidden");
+        adminPanel.classList.add("hidden");
+        signalsSection.classList.remove("hidden");
+      }
+
+      // --- Console Simulation ---
+      function runConsoleSimulation(outputElement, messages, onComplete) {
+        if (!outputElement) return;
+        const outputDiv = outputElement.querySelector("div");
+        if (!outputDiv) return;
+
+        outputDiv.innerHTML = "";
+        let i = 0;
+        const interval = setInterval(() => {
+          if (i < messages.length) {
+            const line = document.createElement("p");
+            line.textContent = `> ${messages[i]}`;
+            if (messages[i].startsWith("SUCCESS")) {
+              line.classList.add("success");
+            }
+            outputDiv.appendChild(line);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+            i++;
+          } else {
+            clearInterval(interval);
+            if (onComplete) onComplete();
+          }
+        }, 300);
+      }
+
+      // --- AVIATOR GAME LOGIC ---
+      function resetAviatorGame() {
+        clearInterval(multiplierAnimation);
+        aviatorMultiplier.textContent = "x1.00";
+        aviatorMultiplier.classList.remove(
+          "multiplier-rising",
+          "multiplier-final"
+        );
+        aviatorBetSuggestion.textContent = "";
+        if (aviatorConsoleOutput.querySelector("div")) {
+          aviatorConsoleOutput.querySelector("div").innerHTML = "";
+        }
+        aviatorActionsInitial.classList.remove("hidden");
+        aviatorGetAnotherBtn.classList.add("hidden");
+        aviatorGetBetBtn.disabled = false;
+        aviatorGetBetBtn.classList.remove("btn-disabled");
+        aviatorGetSignalBtn.disabled = true;
+        aviatorGetSignalBtn.classList.add("btn-disabled");
+        aviatorGetSignalBtn.classList.remove(
+          "bg-green-600",
+          "text-black",
+          "hover:bg-green-500"
+        );
+      }
+
+      function animateMultiplier(target) {
+        target = parseFloat(target);
+        let current = 1.0;
+        aviatorMultiplier.classList.add("multiplier-rising");
+        aviatorMultiplier.classList.remove("multiplier-final");
+        multiplierAnimation = setInterval(() => {
+          const increment = Math.max(0.01, (target - current) * 0.08);
+          current += increment;
+          if (current >= target) {
+            current = target;
+            clearInterval(multiplierAnimation);
+            aviatorMultiplier.classList.remove("multiplier-rising");
+            aviatorMultiplier.classList.add("multiplier-final");
+            aviatorActionsInitial.classList.add("hidden");
+            aviatorGetAnotherBtn.classList.remove("hidden");
+          }
+          aviatorMultiplier.textContent = `x${current.toFixed(2)}`;
+        }, 30);
+      }
+
+      aviatorGetBetBtn.addEventListener("click", () => {
+        aviatorGetBetBtn.disabled = true;
+        aviatorGetBetBtn.classList.add("btn-disabled");
+        aviatorBetSuggestion.textContent = "Analyzing data...";
+        runConsoleSimulation(aviatorConsoleOutput, betConsoleMessages, () => {
+          const minBet = (Math.floor(Math.random() * 5) + 1) * 10;
+          const maxBet = minBet + (Math.floor(Math.random() * 10) + 5) * 10;
+          aviatorBetSuggestion.textContent = `You should bet an amount from ${minBet} to ${maxBet}`;
+          aviatorGetSignalBtn.disabled = false;
+          aviatorGetSignalBtn.classList.remove("btn-disabled");
+          aviatorGetSignalBtn.classList.add(
+            "bg-green-600",
+            "text-black",
+            "hover:bg-green-500"
+          );
+        });
+      });
+
+      aviatorGetSignalBtn.addEventListener("click", () => {
+        if (aviatorGetSignalBtn.disabled) return;
+        aviatorGetSignalBtn.disabled = true;
+        aviatorGetSignalBtn.classList.add("btn-disabled");
+        aviatorBetSuggestion.textContent = "Analyzing data...";
+        runConsoleSimulation(
+          aviatorConsoleOutput,
+          aviatorSignalConsoleMessages,
+          () => {
+            aviatorSignalCount++;
+            localStorage.setItem("aviatorSignalCount", aviatorSignalCount);
+
+            let targetMultiplier;
+            if (fixedAviatorSignal !== null) {
+              targetMultiplier = fixedAviatorSignal;
+            } else {
+              if (aviatorSignalCount <= 7) {
+                targetMultiplier = 1.2 + Math.random() * 1.2;
+              } else {
+                targetMultiplier = 1.01 + Math.random() * 13.99;
+              }
+            }
+            aviatorBetSuggestion.textContent = "";
+            animateMultiplier(targetMultiplier.toFixed(2));
+          }
+        );
+      });
+
+      aviatorGetAnotherBtn.addEventListener("click", resetAviatorGame);
+
+      // --- MINES GAME LOGIC ---
+      function resetMinesGame() {
+        document.querySelector(
+          '#game-screen-mines [data-select-id="grid-size"] .selected-option'
+        ).textContent = `${minesState.gridSize}x${minesState.gridSize}`;
+        document.querySelector(
+          '#game-screen-mines [data-select-id="mine-count"] .selected-option'
+        ).textContent = minesState.mineCount;
+        renderMinesGrid();
+        minesBetSuggestion.textContent = "";
+        if (minesConsoleOutput.querySelector("div")) {
+          minesConsoleOutput.querySelector("div").innerHTML = "";
+        }
+        minesActionsInitial.classList.remove("hidden");
+        minesGetAnotherBtn.classList.add("hidden");
+        minesGetBetBtn.disabled = false;
+        minesGetBetBtn.classList.remove("btn-disabled");
+        minesGetSignalBtn.disabled = true;
+        minesGetSignalBtn.classList.add("btn-disabled");
+        minesGetSignalBtn.classList.remove(
+          "bg-green-600",
+          "text-black",
+          "hover:bg-green-500"
+        );
+      }
+
+      function renderMinesGrid() {
+        minesGridContainer.innerHTML = "";
+        const size = minesState.gridSize;
+        minesGridContainer.className = `grid gap-2 w-full max-w-md aspect-square`;
+        minesGridContainer.style.gridTemplateColumns = `repeat(${size}, minmax(0, 1fr))`;
+        for (let i = 0; i < size * size; i++) {
+          const cell = document.createElement("div");
+          cell.className = "mine-cell flex items-center justify-center";
+          minesGridContainer.appendChild(cell);
+        }
+      }
+
+      minesGetBetBtn.addEventListener("click", () => {
+        minesGetBetBtn.disabled = true;
+        minesGetBetBtn.classList.add("btn-disabled");
+        minesBetSuggestion.textContent = "Analyzing data...";
+        runConsoleSimulation(minesConsoleOutput, betConsoleMessages, () => {
+          const minBet = (Math.floor(Math.random() * 5) + 1) * 10;
+          const maxBet = minBet + (Math.floor(Math.random() * 10) + 5) * 10;
+          minesBetSuggestion.textContent = `You should bet an amount from ${minBet} to ${maxBet}`;
+          minesGetSignalBtn.disabled = false;
+          minesGetSignalBtn.classList.remove("btn-disabled");
+          minesGetSignalBtn.classList.add(
+            "bg-green-600",
+            "text-black",
+            "hover:bg-green-500"
+          );
+        });
+      });
+
+      minesGetSignalBtn.addEventListener("click", () => {
+        if (minesGetSignalBtn.disabled) return;
+        minesGetSignalBtn.disabled = true;
+        minesGetSignalBtn.classList.add("btn-disabled");
+        minesBetSuggestion.textContent = "Analyzing data...";
+        runConsoleSimulation(
+          minesConsoleOutput,
+          minesSignalConsoleMessages,
+          () => {
+            const cells = minesGridContainer.querySelectorAll(".mine-cell");
+
+            let safeIndices;
+            if (fixedMinesSignal !== null) {
+              safeIndices = fixedMinesSignal;
+            } else {
+              const totalCells = cells.length;
+              const indices = Array.from(Array(totalCells).keys());
+              for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+              }
+              safeIndices = indices.slice(0, 5);
+            }
+
+            minesBetSuggestion.textContent = "AI Signal: Revealed 5 safe cells";
+            safeIndices.forEach((index) => {
+              if (cells[index]) cells[index].classList.add("safe");
+            });
+            minesActionsInitial.classList.add("hidden");
+            minesGetAnotherBtn.classList.remove("hidden");
+          }
+        );
+      });
+
+      minesGetAnotherBtn.addEventListener("click", resetMinesGame);
+
+      // --- PENALTY GAME LOGIC ---
+      function resetPenaltyGame() {
+        penaltyTargetZones.forEach((zone) => {
+          zone.classList.remove("highlight");
+          zone.style.transform = "";
+        });
+        penaltyBetSuggestion.textContent = "";
+        penaltySignalCountInRound = 0;
+        if (fixedPenaltySignal !== null) {
+          penaltySignalIndex = 0;
+        }
+        if (penaltyConsoleOutput.querySelector("div")) {
+          penaltyConsoleOutput.querySelector("div").innerHTML = "";
+        }
+        penaltyActionsInitial.classList.remove("hidden");
+        penaltyStartNewGameBtn.classList.add("hidden");
+        penaltyGetBetBtn.disabled = false;
+        penaltyGetBetBtn.classList.remove("btn-disabled");
+        penaltyGetSignalBtn.disabled = true;
+        penaltyGetSignalBtn.classList.add("btn-disabled");
+        penaltyGetSignalBtn.classList.remove(
+          "bg-green-600",
+          "text-black",
+          "hover:bg-green-500"
+        );
+      }
+
+      penaltyGetBetBtn.addEventListener("click", () => {
+        penaltyGetBetBtn.disabled = true;
+        penaltyGetBetBtn.classList.add("btn-disabled");
+        penaltyBetSuggestion.textContent = "Analyzing data...";
+        runConsoleSimulation(penaltyConsoleOutput, betConsoleMessages, () => {
+          const minBet = (Math.floor(Math.random() * 5) + 1) * 10;
+          const maxBet = minBet + (Math.floor(Math.random() * 10) + 5) * 10;
+          penaltyBetSuggestion.textContent = `You should bet an amount from ${minBet} to ${maxBet}`;
+          penaltyGetSignalBtn.disabled = false;
+          penaltyGetSignalBtn.classList.remove("btn-disabled");
+          penaltyGetSignalBtn.classList.add(
+            "bg-green-600",
+            "text-black",
+            "hover:bg-green-500"
+          );
+        });
+      });
+
+      penaltyGetSignalBtn.addEventListener("click", () => {
+        if (penaltyGetSignalBtn.disabled) return;
+        penaltyGetSignalBtn.disabled = true;
+        penaltyBetSuggestion.textContent = "Analyzing data...";
+        runConsoleSimulation(
+          penaltyConsoleOutput,
+          penaltySignalConsoleMessages,
+          () => {
+            penaltyTargetZones.forEach((zone) => {
+              zone.classList.remove("highlight");
+              zone.style.transform = "";
+            });
+
+            let signalZone;
+            if (
+              fixedPenaltySignal !== null &&
+              penaltySignalIndex < fixedPenaltySignal.length
+            ) {
+              signalZone = fixedPenaltySignal[penaltySignalIndex];
+              penaltySignalIndex++;
+            } else {
+              signalZone = Math.floor(Math.random() * 5) + 1;
+            }
+
+            const targetZone = gameScreenPenalty.querySelector(
+              `[data-zone="${signalZone}"]`
+            );
+
+            if (targetZone) {
+              targetZone.classList.add("highlight");
+              if (targetZone.dataset.zone === "3") {
+                targetZone.style.transform = "translateX(-50%) scale(1.1)";
+              } else {
+                targetZone.style.transform = "scale(1.1)";
+              }
+            }
+
+            penaltySignalCountInRound++;
+            const totalSignals = fixedPenaltySignal
+              ? fixedPenaltySignal.length
+              : 5;
+
+            penaltyBetSuggestion.textContent = `AI Signal: Target Zone ${
+              targetZone.dataset.zone
+            } (${totalSignals - penaltySignalCountInRound} signals left)`;
+
+            if (penaltySignalCountInRound === 1) {
+              penaltyStartNewGameBtn.classList.remove("hidden");
+            }
+
+            if (penaltySignalCountInRound >= totalSignals) {
+              setTimeout(resetPenaltyGame, 3000);
+            } else {
+              penaltyGetSignalBtn.disabled = false;
+            }
+          }
+        );
+      });
+
+      penaltyStartNewGameBtn.addEventListener("click", resetPenaltyGame);
+
+      // --- APPLE OF FORTUNE GAME LOGIC ---
+      function resetAppleGame() {
+        appleSignalDisplay.textContent = "#";
+        appleSignalDisplay.classList.remove("number-signal-display");
+        appleBetSuggestion.textContent = "";
+        appleSignalCountInRound = 0;
+        if (fixedAppleSignal !== null) {
+          appleSignalIndex = 0;
+        }
+        if (appleConsoleOutput.querySelector("div")) {
+          appleConsoleOutput.querySelector("div").innerHTML = "";
+        }
+        appleActionsInitial.classList.remove("hidden");
+        appleStartNewGameBtn.classList.add("hidden");
+        appleGetBetBtn.disabled = false;
+        appleGetBetBtn.classList.remove("btn-disabled");
+        appleGetSignalBtn.disabled = true;
+        appleGetSignalBtn.classList.add("btn-disabled");
+        appleGetSignalBtn.classList.remove(
+          "bg-green-600",
+          "text-black",
+          "hover:bg-green-500"
+        );
+      }
+
+      appleGetBetBtn.addEventListener("click", () => {
+        appleGetBetBtn.disabled = true;
+        appleGetBetBtn.classList.add("btn-disabled");
+        appleBetSuggestion.textContent = "Analyzing data...";
+        runConsoleSimulation(appleConsoleOutput, betConsoleMessages, () => {
+          const minBet = (Math.floor(Math.random() * 5) + 1) * 10;
+          const maxBet = minBet + (Math.floor(Math.random() * 10) + 5) * 10;
+          appleBetSuggestion.textContent = `You should bet an amount from ${minBet} to ${maxBet}`;
+          appleGetSignalBtn.disabled = false;
+          appleGetSignalBtn.classList.remove("btn-disabled");
+          appleGetSignalBtn.classList.add(
+            "bg-green-600",
+            "text-black",
+            "hover:bg-green-500"
+          );
+        });
+      });
+
+      appleGetSignalBtn.addEventListener("click", () => {
+        if (appleGetSignalBtn.disabled) return;
+        appleGetSignalBtn.disabled = true;
+        appleBetSuggestion.textContent = "Analyzing data...";
+
+        runConsoleSimulation(
+          appleConsoleOutput,
+          appleSignalConsoleMessages,
+          () => {
+            appleSignalDisplay.classList.remove("number-signal-display");
+            const animationInterval = setInterval(() => {
+              appleSignalDisplay.textContent =
+                Math.floor(Math.random() * 5) + 1;
+            }, 40);
+
+            setTimeout(() => {
+              clearInterval(animationInterval);
+
+              let finalSignal;
+              if (
+                fixedAppleSignal !== null &&
+                appleSignalIndex < fixedAppleSignal.length
+              ) {
+                finalSignal = fixedAppleSignal[appleSignalIndex];
+                appleSignalIndex++;
+              } else {
+                finalSignal = Math.floor(Math.random() * 5) + 1;
+              }
+
+              appleSignalDisplay.textContent = finalSignal;
+              appleSignalDisplay.classList.add("number-signal-display");
+              appleSignalCountInRound++;
+              const totalSignals = fixedAppleSignal
+                ? fixedAppleSignal.length
+                : 10;
+              appleBetSuggestion.textContent = `AI Signal: Select row number ${finalSignal} (${
+                totalSignals - appleSignalCountInRound
+              } signals left)`;
+
+              if (appleSignalCountInRound === 1) {
+                appleStartNewGameBtn.classList.remove("hidden");
+              }
+
+              if (appleSignalCountInRound >= totalSignals) {
+                setTimeout(resetAppleGame, 3000);
+              } else {
+                appleGetSignalBtn.disabled = false;
+              }
+            }, 1000);
+          }
+        );
+      });
+
+      appleStartNewGameBtn.addEventListener("click", resetAppleGame);
+
+      // --- CHICKEN ROAD GAME LOGIC ---
+      function resetChickenGame() {
+        document.querySelector(
+          '#game-screen-chicken [data-select-id="chicken-difficulty"] .selected-option'
+        ).textContent = chickenState.difficulty;
+        chickenState.currentStep = 0;
+        renderChickenStoves(true);
+        chickenBetSuggestion.textContent = "";
+        if (chickenConsoleOutput.querySelector("div")) {
+          chickenConsoleOutput.querySelector("div").innerHTML = "";
+        }
+        chickenActionsInitial.classList.remove("hidden");
+        chickenGetAnotherBtn.classList.add("hidden");
+        chickenGetBetBtn.disabled = false;
+        chickenGetBetBtn.classList.remove("btn-disabled");
+        chickenGetSignalBtn.disabled = true;
+        chickenGetSignalBtn.classList.add("btn-disabled");
+        chickenGetSignalBtn.classList.remove(
+          "bg-green-600",
+          "text-black",
+          "hover:bg-green-500"
+        );
+      }
+
+      function renderChickenStoves(isInitial) {
+        if (isInitial) {
+          chickenRoadTrack.innerHTML = "";
+          for (let i = 0; i < 10; i++) {
+            const stove = document.createElement("div");
+            stove.className = "chicken-stove absolute w-24 h-24 rounded-md";
+            stove.style.left = `${i * STOVE_WIDTH}px`;
+            stove.style.top = "50%";
+            stove.style.transform = "translateY(-50%)";
+            chickenRoadTrack.appendChild(stove);
+          }
+        }
+        const chickenStartPos = STOVE_WIDTH * 1.5 - chickenIcon.offsetWidth / 2;
+        chickenIcon.style.left = `${chickenStartPos}px`;
+        chickenIcon.style.transform = "translateY(-50%)";
+        chickenRoadTrack.style.transform = `translateX(0px)`;
+      }
+
+      async function animateChicken(steps) {
+        for (let i = 0; i < steps; i++) {
+          chickenState.currentStep++;
+          chickenIcon.style.transform = `translateY(-100%) scale(1.1)`;
+          await new Promise((res) => setTimeout(res, 100));
+          chickenRoadTrack.style.transform = `translateX(-${
+            chickenState.currentStep * STOVE_WIDTH
+          }px)`;
+          await new Promise((res) => setTimeout(res, 100));
+          chickenIcon.style.transform = `translateY(-50%) scale(1)`;
+          await new Promise((res) => setTimeout(res, 100));
+          const newStove = document.createElement("div");
+          newStove.className = "chicken-stove absolute w-24 h-24 rounded-md";
+          const lastStove = chickenRoadTrack.lastChild;
+          const newLeft =
+            (lastStove ? parseFloat(lastStove.style.left) : -STOVE_WIDTH) +
+            STOVE_WIDTH;
+          newStove.style.left = `${newLeft}px`;
+          newStove.style.top = "50%";
+          newStove.style.transform = "translateY(-50%)";
+          chickenRoadTrack.appendChild(newStove);
+        }
+        chickenActionsInitial.classList.add("hidden");
+        chickenGetAnotherBtn.classList.remove("hidden");
+      }
+
+      chickenGetBetBtn.addEventListener("click", () => {
+        chickenGetBetBtn.disabled = true;
+        chickenGetBetBtn.classList.add("btn-disabled");
+        chickenBetSuggestion.textContent = "Analyzing data...";
+        runConsoleSimulation(chickenConsoleOutput, betConsoleMessages, () => {
+          const minBet = (Math.floor(Math.random() * 5) + 1) * 10;
+          const maxBet = minBet + (Math.floor(Math.random() * 10) + 5) * 10;
+          chickenBetSuggestion.textContent = `You should bet an amount from ${minBet} to ${maxBet}`;
+          chickenGetSignalBtn.disabled = false;
+          chickenGetSignalBtn.classList.remove("btn-disabled");
+          chickenGetSignalBtn.classList.add(
+            "bg-green-600",
+            "text-black",
+            "hover:bg-green-500"
+          );
+        });
+      });
+
+      chickenGetSignalBtn.addEventListener("click", () => {
+        if (chickenGetSignalBtn.disabled) return;
+        chickenGetSignalBtn.disabled = true;
+        chickenGetSignalBtn.classList.add("btn-disabled");
+        chickenBetSuggestion.textContent = "Analyzing data...";
+        runConsoleSimulation(
+          chickenConsoleOutput,
+          chickenSignalConsoleMessages,
+          () => {
+            let signalSteps;
+            if (fixedChickenSignal !== null) {
+              signalSteps = fixedChickenSignal;
+            } else {
+              let maxSteps = 12;
+              switch (chickenState.difficulty) {
+                case "Medium":
+                  maxSteps = 10;
+                  break;
+                case "Hard":
+                  maxSteps = 8;
+                  break;
+                case "Hardcore":
+                  maxSteps = 4;
+                  break;
+              }
+              signalSteps = Math.floor(Math.random() * maxSteps) + 1;
+            }
+            chickenBetSuggestion.textContent = `AI SIGNAL: CLICK "GO" ${signalSteps} TIMES`;
+            animateChicken(signalSteps);
+          }
+        );
+      });
+
+      chickenGetAnotherBtn.addEventListener("click", resetChickenGame);
+
+      // --- Chat Logic & Data ---
+      function generateRandomUsername() {
+        return `username${Math.floor(Math.random() * 90000) + 10000}`;
+      }
+      const fakeMessages = [
+        "who tried penalty? any luck",
+        "aviator is on fire today caught 5x already!!",
+        "any promo codes guys??",
+        "is this even legit lol looks sketchy",
+        "admin add lucky jet signals please",
+        "Mines is awesome just dont get greedy",
+        "anyone selling an account? ill buy",
+        "cant figure out chicken road any guide",
+        "this is the best predictor ive ever seen",
+        "shoutout to the doubters i doubled my bankroll tonight",
+        "why my access code not working",
+        "apple of fortune is OP",
+        "just withdrew 100$ thanks AI",
+        "this feels like cheating haha",
+        "whats the success rate for you guys today",
+        "penalty missed one for me but still in profit",
+        "remember to manage your risks people",
+        "damn i was one step away on mines...",
+        "the chat is moving so fast",
+        "is there a vip group?",
+        "lol some guy is crying in the corner",
+        "just follow the signal and dont think too much",
+        "it works. simple.",
+        "my friend told me about this site yesterday",
+        "how many signals per day?",
+        "im new here whats the deal",
+        "finally a tool that actually works",
+        "i need more access codes",
+        "just hit 10x on aviator lets gooo",
+        "is this thing safe to use?",
+        "server seems a bit slow today",
+        "lol i lost everything be careful",
+        "cashed out 50 bucks not bad for a start",
+        "the UI is so cool feels like im in a movie",
+        "damn should have stopped earlier",
+        "anyone from europe here?",
+        "the access code system is smart",
+        "who is the admin here? got a question",
+        "this is way better than those scammy tg channels",
+        "chicken road is underrated lol its fun",
+        "waiting for the next signal...",
+        "imma go all in wish me luck",
+        "can i use this on my phone?",
+        "my heart is racing every time i play mines",
+        "the AI must be insane to predict this",
+      ];
+      const qaPairs = [
+        { q: "is this free?", a: "yeah the signals are free for now" },
+        { q: "how to get new access code?", a: "they refresh daily i think" },
+        {
+          q: "anyone tried apple of fortune? is it profitable?",
+          a: "it is but the risk is high",
+        },
+        {
+          q: "my friend cant get in site is down?",
+          a: "works for me maybe try a vpn",
+        },
+        {
+          q: "what happens if i lose?",
+          a: "its part of the game man dont bet more than u can lose",
+        },
+        {
+          q: "can i get banned for using this?",
+          a: "nah its just a predictor not a hack",
+        },
+        {
+          q: "any tips for mines?",
+          a: "yeah start with small bets and dont be greedy",
+        },
+        {
+          q: "whats the best strategy for penalty?",
+          a: "wait for high probability signals dont rush it",
+        },
+        {
+          q: "how accurate is this thing really",
+          a: "pretty good for me like 8/10 wins",
+        },
+        {
+          q: "is there an app for this?",
+          a: "not yet but the site works fine on mobile",
+        },
+        {
+          q: "why is my message blocked?",
+          a: "new users have a limit i think to prevent spam",
+        },
+      ];
+      const userReplies = [
+        (username) =>
+          `hey <span class="font-bold text-red-500">@${username}</span> just try and practice you'll get the hang of it`,
+        (username) =>
+          `<span class="font-bold text-red-500">@${username}</span> there's no single strategy the AI is always adapting just watch and learn`,
+      ];
+      let usedMessages = [];
+      const toggleChat = (show) => {
+        if (show) {
+          chatWidget.classList.remove("hidden");
+          chatToggleBtn.classList.add("hidden");
+          chatOverlay.classList.remove("hidden");
+        } else {
+          chatWidget.classList.add("hidden");
+          chatToggleBtn.classList.remove("hidden");
+          chatOverlay.classList.add("hidden");
+        }
+      };
+      const addMessageToChat = (user, message, isUser = false) => {
+        const messageEl = document.createElement("div");
+        messageEl.classList.add("text-sm");
+        if (isUser) {
+          messageEl.innerHTML = `<span class="font-bold text-red-500">${user}:</span> <span class="text-red-400">${message}</span>`;
+        } else {
+          messageEl.innerHTML = `<span class="font-bold text-cyan-400">${user}:</span> <span>${message}</span>`;
+        }
+        chatMessages.appendChild(messageEl);
+        if (!chatWidget.classList.contains("hidden")) {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+      };
+      const getUniqueRandomMessage = () => {
+        let availableMessages = fakeMessages.filter(
+          (msg) => !usedMessages.includes(msg)
+        );
+        if (availableMessages.length < 5) {
+          usedMessages = [];
+          availableMessages = fakeMessages;
+        }
+        const message =
+          availableMessages[
+            Math.floor(Math.random() * availableMessages.length)
+          ];
+        usedMessages.push(message);
+        return message;
+      };
+      const startChatSimulation = () => {
+        if (chatInterval) return;
+        chatInterval = setInterval(() => {
+          if (Math.random() < 0.25) {
+            const qaPair = qaPairs[Math.floor(Math.random() * qaPairs.length)];
+            const asker = generateRandomUsername();
+            addMessageToChat(asker, qaPair.q);
+            setTimeout(() => {
+              const responder = generateRandomUsername();
+              const answerText = `<span class="font-bold text-cyan-400">@${asker}</span> ${qaPair.a}`;
+              addMessageToChat(responder, answerText);
+            }, Math.random() * 10000 + 5000);
+          } else {
+            const randomUser = generateRandomUsername();
+            const randomMessage = getUniqueRandomMessage();
+            addMessageToChat(randomUser, randomMessage);
+          }
+        }, Math.random() * 8000 + 3000);
+      };
+      let user = {
+        username: localStorage.getItem("ai_predictor_username"),
+        messageCount:
+          parseInt(localStorage.getItem("ai_predictor_msg_count")) || 0,
+      };
+      if (!user.username) {
+        user.username = `user_${Math.floor(Math.random() * 90000) + 10000}`;
+        localStorage.setItem("ai_predictor_username", user.username);
+      }
+      const checkUserBlock = () => {
+        if (user.messageCount >= 2) {
+          chatInput.disabled = true;
+          chatSendBtn.disabled = true;
+          chatInput.placeholder = "Message limit reached";
+        }
+      };
+      const handleUserMessage = () => {
+        const message = chatInput.value.trim();
+        if (!message || user.messageCount >= 2) return;
+        addMessageToChat(user.username, message, true);
+        chatInput.value = "";
+        user.messageCount++;
+        localStorage.setItem("ai_predictor_msg_count", user.messageCount);
+        setTimeout(() => {
+          const replyText = userReplies[user.messageCount - 1](user.username);
+          addMessageToChat("AI_Assistant", replyText);
+        }, Math.random() * 3000 + 2000);
+        checkUserBlock();
+      };
+
+      // --- Signal Card Stats Logic ---
+      const statsConfig = {
+        "stats-aviator": {
+          baseSignals: 500,
+          rangeSignals: 500,
+          baseWinRate: 95,
+          rangeWinRate: 3,
+        },
+        "stats-mines": {
+          baseSignals: 300,
+          rangeSignals: 400,
+          baseWinRate: 85,
+          rangeWinRate: 7,
+        },
+        "stats-penalty": {
+          baseSignals: 100,
+          rangeSignals: 100,
+          baseWinRate: 87,
+          rangeWinRate: 8,
+        },
+        "stats-apple": {
+          baseSignals: 400,
+          rangeSignals: 200,
+          baseWinRate: 90,
+          rangeWinRate: 5,
+        },
+        "stats-chicken": {
+          baseSignals: 400,
+          rangeSignals: 200,
+          baseWinRate: 90,
+          rangeWinRate: 5,
+        },
+        "stats-vip1": {
+          baseSignals: 1000,
+          rangeSignals: 1000,
+          baseWinRate: 98,
+          rangeWinRate: 1,
+        },
+        "stats-vip2": {
+          baseSignals: 1000,
+          rangeSignals: 1000,
+          baseWinRate: 98,
+          rangeWinRate: 1,
+        },
+      };
+      function updateSignalStats() {
+        for (const id in statsConfig) {
+          const el = document.getElementById(id);
+          if (el) {
+            const config = statsConfig[id];
+            const currentSignals =
+              config.baseSignals +
+              Math.floor(Math.random() * config.rangeSignals);
+            const currentWinRate = (
+              config.baseWinRate +
+              Math.random() * config.rangeWinRate
+            ).toFixed(1);
+            el.innerHTML = `Signals/sec: <span class="text-green-400">${currentSignals}</span><br>Success rate: <span class="font-bold text-lime-300">${currentWinRate}%</span>`;
+          }
+        }
+      }
+
+      // --- Live Winners Feed Logic ---
+      const liveFeedContainer = document.getElementById("live-feed-container");
+      const winnersData = [
+        {
+          game: "aviator",
+          icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQqBdX8SuaC1Ws7ZYuCVQstQ4qRi9A_3SWujg&s",
+        },
+        { game: "mines", icon: "https://dudaray.kz/3.png" },
+        {
+          game: "penalty",
+          icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThYP5CGxc52hWd4ToMHI8MIJhun5BEjHh5LQ&s",
+        },
+        {
+          game: "apple",
+          icon: "https://play-lh.googleusercontent.com/ezAY-TvV3PlhYWLs8k8czRjWWSdBwFtPrw72fNpS8p6wByC0xBG-Dgt0K5ojieZXrg",
+        },
+        {
+          game: "chicken",
+          icon: "https://cdn6.aptoide.com/imgs/1/0/2/1023a04c18a7a91673200703af12a58f_icon.png",
+        },
+      ];
+      let winnersFeed = JSON.parse(localStorage.getItem("winnersFeed")) || [];
+      const MAX_WINNERS_IN_FEED = 20;
+      function createWinnerElement(winner) {
+        const winnerEl = document.createElement("div");
+        winnerEl.className =
+          "winner-item flex-shrink-0 flex items-center space-x-3 bg-gray-900/50 p-2 rounded-md w-48";
+        winnerEl.innerHTML = ` <img src="${winner.icon}" class="w-10 h-10 rounded-md object-cover"> <div class="flex flex-col text-xs overflow-hidden"> <span class="text-gray-200 font-bold truncate">${winner.user}</span> <span class="font-bold text-lime-300 text-sm">$${winner.amount}</span> </div> `;
+        return winnerEl;
+      }
+      function generateWinner() {
+        const randomGame =
+          winnersData[Math.floor(Math.random() * winnersData.length)];
+        const randomUser = generateRandomUsername();
+        const randomAmount =
+          Math.round((Math.random() * 8000 + 1000) / 100) * 100;
+        return {
+          icon: randomGame.icon,
+          user: randomUser,
+          amount: randomAmount,
+        };
+      }
+      function renderWinnersFeed() {
+        liveFeedContainer.innerHTML = "";
+        winnersFeed.forEach((winner) => {
+          const winnerEl = createWinnerElement(winner);
+          winnerEl.style.animation = "none";
+          liveFeedContainer.appendChild(winnerEl);
+        });
+      }
+      function addNewWinner() {
+        const newWinner = generateWinner();
+        winnersFeed.unshift(newWinner);
+        if (winnersFeed.length > MAX_WINNERS_IN_FEED) {
+          winnersFeed.pop();
+        }
+        localStorage.setItem("winnersFeed", JSON.stringify(winnersFeed));
+        const winnerEl = createWinnerElement(newWinner);
+        liveFeedContainer.prepend(winnerEl);
+        if (liveFeedContainer.children.length > MAX_WINNERS_IN_FEED) {
+          liveFeedContainer.lastChild.remove();
+        }
+        const randomDelay = Math.random() * 20000 + 10000;
+        setTimeout(addNewWinner, randomDelay);
+      }
+
+      // --- Event Listeners & Initialization ---
+      const allCustomSelects = document.querySelectorAll("[data-select-id]");
+      allCustomSelects.forEach((select) => {
+        const trigger = select.querySelector(".custom-select-trigger");
+        const options = select.querySelector(".custom-select-options");
+        const selectedOptionEl = trigger.querySelector(".selected-option");
+        trigger.addEventListener("click", (e) => {
+          e.stopPropagation();
+          options.classList.toggle("hidden");
+        });
+        options.addEventListener("click", (e) => {
+          if (e.target.tagName === "DIV") {
+            const newValue = e.target.textContent;
+            selectedOptionEl.textContent = newValue;
+            options.classList.add("hidden");
+            const selectId = select.dataset.selectId;
+            if (selectId === "grid-size") {
+              minesState.gridSize = parseInt(newValue.split("x")[0]);
+              resetMinesGame();
+            } else if (selectId === "mine-count") {
+              minesState.mineCount = parseInt(newValue);
+              resetMinesGame();
+            } else if (selectId === "chicken-difficulty") {
+              chickenState.difficulty = newValue;
+              resetChickenGame();
+            }
+          }
+        });
+      });
+      document.addEventListener("click", () =>
+        allCustomSelects.forEach((select) =>
+          select.querySelector(".custom-select-options").classList.add("hidden")
+        )
+      );
+
+      openModalBtn.addEventListener("click", openModal);
+      closeModalBtn.addEventListener("click", closeModal);
+      validateBtn.addEventListener("click", handleValidation);
+      accessCodeInput.addEventListener("keyup", (event) => {
+        if (event.key === "Enter") handleValidation();
+      });
+      accessModal.addEventListener("click", (event) => {
+        if (event.target === accessModal) closeModal();
+      });
+      chatToggleBtn.addEventListener("click", () => toggleChat(true));
+      chatCloseBtn.addEventListener("click", () => toggleChat(false));
+      chatOverlay.addEventListener("click", () => toggleChat(false));
+      chatSendBtn.addEventListener("click", handleUserMessage);
+      chatInput.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") handleUserMessage();
+      });
+
+      logoutBtn.addEventListener("click", () => {
+        localStorage.removeItem("accessGrantedTimestamp");
+        localStorage.removeItem("isAdmin");
+        window.location.reload();
+      });
+
+      activateBtns.forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const card = e.target.closest(".signal-card");
+          if (card.classList.contains("locked-card")) return;
+          const gameName = card.dataset.game;
+          showGameView(gameName);
+        });
+      });
+
+      document.querySelectorAll(".back-to-signals-btn").forEach((btn) => {
+        btn.addEventListener("click", showSignalsView);
+      });
+
+      // --- ADMIN PANEL LOGIC ---
+      function setAdminStatus(message, isError = false) {
+        adminStatusMessage.textContent = message;
+        adminStatusMessage.style.color = isError ? "#ef4444" : "#48bb78";
+        setTimeout(() => (adminStatusMessage.textContent = ""), 4000);
+      }
+
+      adminPanelBtn.addEventListener("click", () => {
+        adminPanel.classList.toggle("hidden");
+        signalsSection.classList.toggle("hidden");
+        gameView.classList.add("hidden");
+      });
+
+      adminSetBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const game = btn.dataset.game;
+          const input = document.getElementById(`admin-${game}`);
+          const value = input.value.trim();
+
+          try {
+            if (!value) {
+              clearAllFixedSignals();
+              setAdminStatus(
+                `Поле пустое. Сигнал для "${game}" сброшен на случайный.`
+              );
+              return;
+            }
+
+            if (game === "aviator") {
+              const num = parseFloat(value);
+              if (isNaN(num) || num <= 1) throw new Error("Введите число > 1.");
+              fixedAviatorSignal = num;
+            } else if (game === "chicken") {
+              const num = parseInt(value, 10);
+              if (isNaN(num) || num <= 0)
+                throw new Error("Введите положительное целое число.");
+              fixedChickenSignal = num;
+            } else {
+              const arr = value.split(",").map((s) => parseInt(s.trim(), 10));
+              if (arr.some(isNaN))
+                throw new Error(
+                  "Неверный формат. Используйте числа через запятую."
+                );
+
+              if (game === "mines") {
+                if (arr.length !== 5)
+                  throw new Error("Требуется ровно 5 ячеек.");
+                fixedMinesSignal = arr;
+              }
+              if (game === "penalty") {
+                if (arr.length !== 5) throw new Error("Требуется ровно 5 зон.");
+                fixedPenaltySignal = arr;
+                penaltySignalIndex = 0;
+              }
+              if (game === "apple") {
+                if (arr.length !== 10)
+                  throw new Error("Требуется ровно 10 рядов.");
+                fixedAppleSignal = arr;
+                appleSignalIndex = 0;
+              }
+            }
+            setAdminStatus(`Сигнал для "${game}" успешно установлен: ${value}`);
+            input.value = "";
+          } catch (e) {
+            setAdminStatus(`Ошибка: ${e.message}`, true);
+          }
+        });
+      });
+
+      adminClearAllBtn.addEventListener("click", () => {
+        fixedAviatorSignal = null;
+        fixedMinesSignal = null;
+        fixedPenaltySignal = null;
+        penaltySignalIndex = 0;
+        fixedAppleSignal = null;
+        appleSignalIndex = 0;
+        fixedChickenSignal = null;
+        setAdminStatus("Все установленные сигналы сброшены.");
+        document.getElementById("admin-aviator").value = "";
+        document.getElementById("admin-mines").value = "";
+        document.getElementById("admin-penalty").value = "";
+        document.getElementById("admin-apple").value = "";
+        document.getElementById("admin-chicken").value = "";
+      });
+
+      // --- Initial Calls ---
+      checkAccessSession();
+      checkUserBlock();
+      startChatSimulation();
+      updateSignalStats();
+      setInterval(updateSignalStats, 2500);
+      renderWinnersFeed();
+      setTimeout(addNewWinner, Math.random() * 5000 + 2000);
+    </script>
+  </body>
+</html>
