@@ -1660,6 +1660,56 @@
         );
       }
 
+      function showPenaltySignal() {
+        penaltyTargetZones.forEach((zone) => {
+          zone.classList.remove("highlight");
+          zone.style.transform = "";
+        });
+
+        let signalZone;
+        if (
+          fixedPenaltySignal !== null &&
+          penaltySignalIndex < fixedPenaltySignal.length
+        ) {
+          signalZone = fixedPenaltySignal[penaltySignalIndex];
+          penaltySignalIndex++;
+        } else {
+          signalZone = Math.floor(Math.random() * 5) + 1;
+        }
+
+        const targetZone = gameScreenPenalty.querySelector(
+          `[data-zone="${signalZone}"]`
+        );
+
+        if (targetZone) {
+          targetZone.classList.add("highlight");
+          if (targetZone.dataset.zone === "3") {
+            targetZone.style.transform = "translateX(-50%) scale(1.1)";
+          } else {
+            targetZone.style.transform = "scale(1.1)";
+          }
+        }
+
+        penaltySignalCountInRound++;
+        const totalSignals = fixedPenaltySignal
+          ? fixedPenaltySignal.length
+          : 5;
+
+        penaltyBetSuggestion.textContent = `AI Signal: Target Zone ${
+          targetZone.dataset.zone
+        } (${totalSignals - penaltySignalCountInRound} signals left)`;
+
+        if (penaltySignalCountInRound === 1) {
+          penaltyStartNewGameBtn.classList.remove("hidden");
+        }
+
+        if (penaltySignalCountInRound >= totalSignals) {
+          setTimeout(resetPenaltyGame, 3000);
+        } else {
+          penaltyGetSignalBtn.disabled = false;
+        }
+      }
+
       penaltyGetBetBtn.addEventListener("click", () => {
         penaltyGetBetBtn.disabled = true;
         penaltyGetBetBtn.classList.add("btn-disabled");
@@ -1681,60 +1731,21 @@
       penaltyGetSignalBtn.addEventListener("click", () => {
         if (penaltyGetSignalBtn.disabled) return;
         penaltyGetSignalBtn.disabled = true;
-        penaltyBetSuggestion.textContent = "Analyzing data...";
-        runConsoleSimulation(
-          penaltyConsoleOutput,
-          penaltySignalConsoleMessages,
-          () => {
-            penaltyTargetZones.forEach((zone) => {
-              zone.classList.remove("highlight");
-              zone.style.transform = "";
-            });
 
-            let signalZone;
-            if (
-              fixedPenaltySignal !== null &&
-              penaltySignalIndex < fixedPenaltySignal.length
-            ) {
-              signalZone = fixedPenaltySignal[penaltySignalIndex];
-              penaltySignalIndex++;
-            } else {
-              signalZone = Math.floor(Math.random() * 5) + 1;
+        if (penaltySignalCountInRound > 0) {
+          // Instant signal after the first one.
+          showPenaltySignal();
+        } else {
+          // First signal, run the simulation.
+          penaltyBetSuggestion.textContent = "Analyzing data...";
+          runConsoleSimulation(
+            penaltyConsoleOutput,
+            penaltySignalConsoleMessages,
+            () => {
+              showPenaltySignal();
             }
-
-            const targetZone = gameScreenPenalty.querySelector(
-              `[data-zone="${signalZone}"]`
-            );
-
-            if (targetZone) {
-              targetZone.classList.add("highlight");
-              if (targetZone.dataset.zone === "3") {
-                targetZone.style.transform = "translateX(-50%) scale(1.1)";
-              } else {
-                targetZone.style.transform = "scale(1.1)";
-              }
-            }
-
-            penaltySignalCountInRound++;
-            const totalSignals = fixedPenaltySignal
-              ? fixedPenaltySignal.length
-              : 5;
-
-            penaltyBetSuggestion.textContent = `AI Signal: Target Zone ${
-              targetZone.dataset.zone
-            } (${totalSignals - penaltySignalCountInRound} signals left)`;
-
-            if (penaltySignalCountInRound === 1) {
-              penaltyStartNewGameBtn.classList.remove("hidden");
-            }
-
-            if (penaltySignalCountInRound >= totalSignals) {
-              setTimeout(resetPenaltyGame, 3000);
-            } else {
-              penaltyGetSignalBtn.disabled = false;
-            }
-          }
-        );
+          );
+        }
       });
 
       penaltyStartNewGameBtn.addEventListener("click", resetPenaltyGame);
